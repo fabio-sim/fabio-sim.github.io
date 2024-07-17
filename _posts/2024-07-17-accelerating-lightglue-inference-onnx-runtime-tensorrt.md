@@ -185,5 +185,5 @@ In this post, we considered the LightGlue model without adaptive depth or width,
 [^4]: Daniel DeTone, Tomasz Malisiewicz, Andrew Rabinovich; "SuperPoint: Self-Supervised Interest Point Detection and Description" in *CVPR Deep Learning for Visual SLAM Workshop*, 2018.
 [^5]: Michał J. Tyszkiewicz, Pascal Fua, Eduard Trulls; "DISK: Learning local features with policy gradient" in *Advances in Neural Information Processing Systems*, vol. 33, 2020.
 [^6]: David G. Lowe; "Distinctive Image Features from Scale-Invariant Keypoints" in *International Journal of Computer Vision*, vol. 60, 2004, pp. 91-110.
-[^7]: PyTorch Contributors; "PyTorch Custom Operators", Accessed 2024. Available: [https://pytorch.org/tutorials/advanced/custom_ops_landing_page.html](https://pytorch.org/tutorials/advanced/custom_ops_landing_page.html)
-[^8]: NVIDIA, "TensorRT Operators Documentation: TopK", Accessed 2024. Available: [https://docs.nvidia.com/deeplearning/tensorrt/operators/docs/TopK.html](https://docs.nvidia.com/deeplearning/tensorrt/operators/docs/TopK.html)
+[^7]: PyTorch Contributors; "PyTorch Custom Operators", Accessed 2024. Available: [URL](https://pytorch.org/tutorials/advanced/custom_ops_landing_page.html)
+[^8]: NVIDIA, "TensorRT Operators Documentation: TopK", Accessed 2024. Available: [URL](https://docs.nvidia.com/deeplearning/tensorrt/operators/docs/TopK.html)
