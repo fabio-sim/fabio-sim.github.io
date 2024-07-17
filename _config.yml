@@ -267,7 +267,7 @@ pagination:
     after: 2
 
 
-# Plugins (previously gems:)
+# Plugins
 plugins:
   - jekyll-paginate
   - jekyll-sitemap
