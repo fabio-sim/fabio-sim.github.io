@@ -10,14 +10,14 @@
 # Review documentation to determine if you should use `theme` or `remote_theme`
 # https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide/#installing-the-theme
 
-remote_theme             : "mmistakes/minimal-mistakes@4.26.2"
+remote_theme             : "mmistakes/minimal-mistakes@4.27.3"
 minimal_mistakes_skin    : "dark" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
 # Site Settings
 locale                   : "en-US"
 title                    : "Fabio's Journal"
 title_separator          : "-"
-subtitle                 : "Deep Learning"
+subtitle                 : "AI"
 name                     : "Fabio Milentiansen Sim"
 description              : "Welcome to Fabio's Journal, where I share my experiences with deep learning, model optimization, and performance tuning techniques. From practical insights to detailed explorations, this space documents my journey through the world of open-source AI, advancing ML training and inference with frameworks like PyTorch, ONNX Runtime, and TensorRT."
 url                      : "https://fabio-sim.github.io"
@@ -119,8 +119,8 @@ analytics:
 author:
   name             : "Fabio Milentiansen Sim"
   avatar           : "/assets/images/bio/avatar.png"
-  bio              : "Deep Learning Researcher & Engineer"
-  location         : "Jakarta, Indonesia"
+  bio              : "AI Research Engineer"
+  # location         : "Jakarta, Indonesia"
   email            : "fabio.milentiansen.sim@gmail.com"
   # home              : "/about"
   links:
