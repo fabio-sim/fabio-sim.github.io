@@ -32,6 +32,82 @@ $(document).ready(function () {
     }, 400);
   });
 
+  // Theme toggle
+  (function () {
+    var storageKey = "theme";
+    var themeToggle = document.querySelector(".theme__toggle");
+    var lightLink = document.querySelector('link[data-theme="light"]');
+    var darkLink = document.querySelector('link[data-theme="dark"]');
+    var prefersDarkQuery = window.matchMedia
+      ? window.matchMedia("(prefers-color-scheme: dark)")
+      : null;
+
+    var getStoredTheme = function () {
+      try {
+        var stored = localStorage.getItem(storageKey);
+        if (stored === "light" || stored === "dark") {
+          return stored;
+        }
+      } catch (e) {
+        return null;
+      }
+      return null;
+    };
+
+    var updateToggleState = function (theme) {
+      if (!themeToggle) return;
+      themeToggle.setAttribute("aria-pressed", theme === "dark");
+    };
+
+    var applyTheme = function (theme, persist) {
+      if (theme !== "light" && theme !== "dark") return;
+      document.documentElement.setAttribute("data-theme", theme);
+      if (lightLink && darkLink) {
+        if (theme === "dark") {
+          darkLink.media = "all";
+          lightLink.media = "not all";
+        } else {
+          lightLink.media = "all";
+          darkLink.media = "not all";
+        }
+      }
+      updateToggleState(theme);
+      if (persist) {
+        try {
+          localStorage.setItem(storageKey, theme);
+        } catch (e) {
+          return;
+        }
+      }
+    };
+
+    var storedTheme = getStoredTheme();
+    if (storedTheme) {
+      applyTheme(storedTheme, false);
+    } else {
+      var systemTheme = prefersDarkQuery && prefersDarkQuery.matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", systemTheme);
+      updateToggleState(systemTheme);
+      if (prefersDarkQuery && prefersDarkQuery.addEventListener) {
+        prefersDarkQuery.addEventListener("change", function (event) {
+          if (getStoredTheme()) return;
+          var nextTheme = event.matches ? "dark" : "light";
+          document.documentElement.setAttribute("data-theme", nextTheme);
+          updateToggleState(nextTheme);
+        });
+      }
+    }
+
+    if (themeToggle) {
+      themeToggle.addEventListener("click", function () {
+        var currentTheme =
+          document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+        var nextTheme = currentTheme === "dark" ? "light" : "dark";
+        applyTheme(nextTheme, true);
+      });
+    }
+  })();
+
   // Smooth scrolling
   var scroll = new SmoothScroll('a[href*="#"]', {
     offset: 20,
@@ -123,21 +199,25 @@ $(document).ready(function () {
   });
 
   // Add anchors for headings
-  document
-    .querySelector(".page__content")
-    .querySelectorAll("h1, h2, h3, h4, h5, h6")
-    .forEach(function (element) {
-      var id = element.getAttribute("id");
-      if (id) {
-        var anchor = document.createElement("a");
-        anchor.className = "header-link";
-        anchor.href = "#" + id;
-        anchor.innerHTML =
-          '<span class="sr-only">Permalink</span><i class="fas fa-link"></i>';
-        anchor.title = "Permalink";
-        element.appendChild(anchor);
-      }
-    });
+  (function () {
+    var pageContentElement = document.querySelector(".page__content");
+    if (!pageContentElement) return;
+
+    pageContentElement
+      .querySelectorAll("h1, h2, h3, h4, h5, h6")
+      .forEach(function (element) {
+        var id = element.getAttribute("id");
+        if (id) {
+          var anchor = document.createElement("a");
+          anchor.className = "header-link";
+          anchor.href = "#" + id;
+          anchor.innerHTML =
+            '<span class="sr-only">Permalink</span><i class="fas fa-link"></i>';
+          anchor.title = "Permalink";
+          element.appendChild(anchor);
+        }
+      });
+  })();
 
   // Add copy button for <pre> blocks
   var copyText = function (text) {

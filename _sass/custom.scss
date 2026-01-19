@@ -1,0 +1,47 @@
+/* Custom overrides loaded after Minimal Mistakes */
+
+.archive__item-title {
+  font-family: $header-font-family;
+}
+
+.masthead__inner-wrap .site-title {
+  font-family: $header-font-family;
+}
+
+.theme__toggle {
+  margin-inline: 1rem;
+  height: $nav-toggle-height;
+  border: 0;
+  outline: none;
+  color: $primary-color;
+  background-color: transparent;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover {
+    color: mix(#000, $primary-color, 25%);
+  }
+}
+
+.theme-toggle__icon {
+  display: none;
+  width: 1.05em;
+  height: 1.05em;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+  fill: none;
+}
+
+html[data-theme="light"] .theme-toggle__icon--sun {
+  display: inline-block;
+}
+
+html[data-theme="dark"] .theme-toggle__icon--moon {
+  display: inline-block;
+}
+
+.no-js .theme__toggle {
+  display: none;
+}

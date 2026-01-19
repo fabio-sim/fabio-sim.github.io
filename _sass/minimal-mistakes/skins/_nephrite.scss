@@ -1,0 +1,35 @@
+/* ==========================================================================
+   Nephrite skin
+   ========================================================================== */
+
+/* Typography */
+$global-font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", Arial, sans-serif !default;
+$header-font-family: "Iowan Old Style", "Palatino Linotype", "URW Palladio L", P052, Georgia, serif !default;
+$caption-font-family: "Iowan Old Style", "Palatino Linotype", "URW Palladio L", P052, Georgia, serif !default;
+
+/* Colors */
+$background-color: #09090b !default;
+$text-color: #e7e7e1 !default;
+$primary-color: #7fd4a2 !default;
+$border-color: mix(#fff, $background-color, 18%) !default;
+$code-background-color: mix(#000, $background-color, 18%) !default;
+$code-background-color-dark: mix(#000, $background-color, 25%) !default;
+$form-background-color: mix(#000, $background-color, 15%) !default;
+$footer-background-color: mix(#000, $background-color, 25%) !default;
+$link-color: mix($primary-color, $text-color, 35%) !default;
+$link-color-hover: mix(#fff, $link-color, 25%) !default;
+$link-color-visited: mix(#000, $link-color, 25%) !default;
+$masthead-link-color: $text-color !default;
+$masthead-link-color-hover: mix(#000, $text-color, 20%) !default;
+$navicon-link-color-hover: mix(#000, $background-color, 35%) !default;
+
+.author__urls.social-icons i,
+.author__urls.social-icons .svg-inline--fa,
+.page__footer-follow .social-icons i,
+.page__footer-follow .social-icons .svg-inline--fa {
+  color: inherit;
+}
+
+.ais-search-box .ais-search-box--input {
+  background-color: $form-background-color;
+}

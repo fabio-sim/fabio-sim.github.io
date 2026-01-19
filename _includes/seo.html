@@ -2,7 +2,11 @@
 {%- assign title_separator = site.title_separator | default: '-' -%}
 
 {%- assign page_title = page.title | default: site.title | replace: '|', '&#124;' -%}
-{%- assign seo_title = page_title | append: " " | append: title_separator | append: " " | append: site.title | replace: '|', '&#124;' -%}
+{%- if page_title contains site.title -%}
+  {%- assign seo_title = page_title | replace: '|', '&#124;' -%}
+{%- else -%}
+  {%- assign seo_title = page_title | append: " " | append: title_separator | append: " " | append: site.title | replace: '|', '&#124;' -%}
+{%- endif -%}
 
 {%- assign page_title = page_title | markdownify | strip_html | strip_newlines | escape_once -%}
 {%- assign seo_title  = seo_title  | markdownify | strip_html | strip_newlines | escape_once -%}
@@ -35,15 +39,15 @@
 <meta name="description" content="{{ seo_description }}">
 
 {% if author.name %}
-  <meta name="author" content="{{ author.name | default: author }}">
+  <meta name="author" content="{{ author.name | default: author | escape_once | strip }}">
   {% if og_type == "article" %}
-  <meta property="article:author" content="{{ author.name | default: author }}">
+  <meta property="article:author" content="{{ author.name | default: author | escape_once | strip }}">
   {% endif %}
 {% endif %}
 
 <meta property="og:type" content="{{ og_type }}">
 <meta property="og:locale" content="{{ site.locale | replace: "-", "_" | default: "en_US" }}">
-<meta property="og:site_name" content="{{ site.title }}">
+<meta property="og:site_name" content="{{ site.title | escape_once | strip }}">
 <meta property="og:title" content="{{ page_title }}">
 <meta property="og:url" content="{{ canonical_url }}">
 

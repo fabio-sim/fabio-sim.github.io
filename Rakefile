@@ -1,7 +1,14 @@
-require "bundler/gem_tasks"
-require "jekyll"
+gemspecs = Dir.glob("*.gemspec")
+require "bundler/gem_tasks" unless gemspecs.empty?
+begin
+  require "jekyll"
+rescue LoadError
+end
 require "json"
-require "listen"
+begin
+  require "listen"
+rescue LoadError
+end
 require "rake/clean"
 require "shellwords"
 require "time"
