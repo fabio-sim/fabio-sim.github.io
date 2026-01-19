@@ -28,7 +28,7 @@ header:
 mathjax: true
 ---
 
-[LightGlue](https://github.com/cvg/LightGlue) (ICCV2023[^1]) is a fast feature matcher for image pairs. My [previous post](/blog/accelerating-lightglue-inference-onnx-runtime-tensorrt/) covered the ONNX export and ONNXRuntime/TensorRT integration in detail.[^2] FP8 quantization adds a new set of tradeoffs.
+[LightGlue](https://github.com/cvg/LightGlue) (ICCV2023[^1]) is a fast feature matcher for image pairs. My [previous post](/blog/accelerating-lightglue-inference-onnx-runtime-tensorrt/) covered the ONNX export and ONNX Runtime/TensorRT integration in detail.[^2] FP8 quantization adds a new set of tradeoffs.
 
 FP8 changes two things that matter in deployment: engine size and math precision. FP8 TensorRT engines for the SuperPoint + LightGlue pipeline came out as small as 0.32× the FP32 size, while reaching up to 5.97× speedup versus FP32. Match counts dropped. Sometimes they dropped hard.
 
@@ -44,12 +44,24 @@ E4M3 buys mantissa precision at the cost of exponent range. E5M2 does the revers
 
 ![FP8 floating-point format](/assets/images/posts/lightglue-fp8/fp8-format-illust.png "FP8 floating-point format"){: .align-center}
 
-TensorRT’s[^3] FP8 path here runs through **explicit quantization**. The ONNX graph carries `QuantizeLinear` and `DequantizeLinear` nodes and the per-tensor scales. NVIDIA Model Optimizer[^4] emits that graph form from a float model.
+FP8 acceleration requires hardware support. NVIDIA GPUs with FP8 Tensor Cores start at Hopper and Ada Lovelace. On earlier architectures, TensorRT may build an engine but FP8 computation is unavailable, so execution must fall back to higher precision.
+
+# Quantization Overview
+
+Quantization[^3] rewrites a model to use a lower-precision representation for selected tensors. Fewer bytes move through memory. Kernels change.
+
+Most deployment quantization is post-training. Calibration inputs drive activation statistics. The quantizer chooses a scale for each quantized tensor, then inserts quantize and dequantize operations at the boundaries.
+
+![Model quantization overview](/assets/images/posts/lightglue-fp8/model-quantization-overview-illust.png "Model quantization overview"){: .align-center}
+
+TensorRT’s[^4] FP8 path here uses **explicit quantization**. The ONNX graph carries `QuantizeLinear` and `DequantizeLinear` nodes and their scales. NVIDIA Model Optimizer[^5] emits that graph form from a float model.
+
+FP8 seldom covers the full graph. Unsupported operators run in higher precision. Accumulation often does too. The boundary choices decide accuracy drift and whether FP8 wins on latency.
 
 # Pipeline Recap
 
 The end-to-end pipeline has two stages:
-1. **SuperPoint** extracts keypoints and descriptors from each image.[^5]
+1. **SuperPoint** extracts keypoints and descriptors from each image.[^6]
 2. **LightGlue** matches those descriptors with transformer blocks and produces correspondences.
 
 The pipeline shape has two main knobs: image resolution $$(H, W)$$ and the number of keypoints $$K$$. Resolution shifts work toward SuperPoint’s convolutions, whereas keypoints shifts work toward LightGlue’s transformer layers (attention and matmuls).
@@ -123,11 +135,11 @@ Each configuration has a separate ONNX export and three TensorRT engines (FP32, 
       SuperPoint selects the top-<code>K</code> keypoints. In TensorRT, that selection maps to the <code>TopK</code> operator, whose maximum supported limit is <code>K=3840</code>.
     </p>
   </div>
-</details>[^6]
+</details>[^7]
 
 ## Speedup versus FP32
 
-FP16 gives strong speedups across the board. FP8 wins in a few configurations, then loses in others.
+FP16 gives strong speedups across the board. FP8 wins even more in a few configurations, then loses in others.
 
 - Best FP32 to FP8 speedup: **5.97×** at 512×512 with 3840 keypoints.
 - Weakest FP32 to FP8 speedup: **1.76×** at 1024×1024 with 512 keypoints.
@@ -142,7 +154,7 @@ FP8 compresses the engine hard. FP32 engines cluster around 56 to 63 MiB in this
 
 ## Match Quality
 
-Match count is a crude metric. It is still a useful red flag when a quantization run collapses scores below threshold.
+While match count is a crude metric, it is still a useful red flag when a quantization run collapses scores below threshold.
 
 Bars show the mean match-count ratio for two sample pairs across the eight configurations, relative to FP32.
 
@@ -150,7 +162,7 @@ Bars show the mean match-count ratio for two sample pairs across the eight confi
 
 # Conclusion
 
-Resolution and keypoint count pull in different directions. 512×512 with large $$K$$ pushes work into LightGlue’s matrix multiplies. FP8 can win there. At 1024×1024 with small $$K$$, SuperPoint dominates. FP16 already runs clean and FP8 pays extra conversion overhead inside the graph.
+Resolution and keypoint count pull in different directions. 512×512 with large $$K$$ pushes work into LightGlue’s attention and matrix multiplications. FP8 can win there. At 1024×1024 with small $$K$$, SuperPoint's convolutional layers dominate. FP16 already runs clean and FP8 pays extra conversion overhead inside the graph.
 
 Engine size follows precision more than it follows shape. FP8 shrinks weights and activations in the serialized engine. The 1024×1024, 2048-keypoint outlier points to tactic selection and layout choices inside TensorRT. That behavior changes across GPUs and TensorRT versions.
 
@@ -160,7 +172,8 @@ Quality is the real constraint. FP8 preserved enough matches on the easy pair fo
 
 [^1]: Philipp Lindenberger, Paul-Edouard Sarlin, Marc Pollefeys; "LightGlue: Local Feature Matching at Light Speed" in *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*, 2023, pp. 17627-17638.
 [^2]: Fabio Milentiansen Sim, "Accelerating LightGlue Inference with ONNX Runtime and TensorRT", 2024. Available: [URL](/blog/accelerating-lightglue-inference-onnx-runtime-tensorrt/)
-[^3]: NVIDIA, "TensorRT", Accessed 2026. Available: [URL](https://github.com/NVIDIA/TensorRT)
-[^4]: NVIDIA, "Model Optimizer (ModelOpt)", Accessed 2026. Available: [URL](https://github.com/NVIDIA/Model-Optimizer)
-[^5]: Daniel DeTone, Tomasz Malisiewicz, Andrew Rabinovich; "SuperPoint: Self-Supervised Interest Point Detection and Description" in *CVPR Deep Learning for Visual SLAM Workshop*, 2018.
-[^6]: NVIDIA, "TensorRT Operators Documentation: TopK", Accessed 2026. Available: [URL](https://docs.nvidia.com/deeplearning/tensorrt/10.9.0/_static/operators/TopK.html)
+[^3]: ONNX Runtime, "Quantization", Accessed 2026. Available: [URL](https://onnxruntime.ai/docs/performance/model-optimizations/quantization.html)
+[^4]: NVIDIA, "TensorRT", Accessed 2026. Available: [URL](https://developer.nvidia.com/tensorrt)
+[^5]: NVIDIA, "Model Optimizer (ModelOpt)", Accessed 2026. Available: [URL](https://github.com/NVIDIA/Model-Optimizer)
+[^6]: Daniel DeTone, Tomasz Malisiewicz, Andrew Rabinovich; "SuperPoint: Self-Supervised Interest Point Detection and Description" in *CVPR Deep Learning for Visual SLAM Workshop*, 2018.
+[^7]: NVIDIA, "TensorRT Operators Documentation: TopK", Accessed 2026. Available: [URL](https://docs.nvidia.com/deeplearning/tensorrt/10.9.0/_static/operators/TopK.html)

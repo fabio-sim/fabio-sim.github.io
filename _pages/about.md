@@ -2,12 +2,12 @@
 permalink: /about/
 ---
 
-Fabio Milentiansen Sim was born in Bekasi, Indonesia, in 2000. He received the B.Eng. degree (summa cum laude) in mechatronics engineering from Swiss German University, Indonesia, as well as the B.Eng. degree (double-degree) from South Westphalia University of Applied Sciences, Germany, in 2020. His research thesis focused on deep learning methods for solving differential equations (Physics ML), alongside their applications to physical systems.
+I’m Fabio Milentiansen Sim, a Research Engineer at Nomura Research Institute. I research, build, and optimize machine learning systems, with a focus on large language models and computer vision. I’m a polyglot in English, Japanese, Chinese, Indonesian, and German.
 
-Currently, he is a Machine Learning Engineer at Nomura Research Institute. His research interests include generative AI, computer vision, natural language processing, and physics machine learning. He is also an AWS Certified Machine Learning & Data Analytics Specialist, as well as a Google Cloud Certified Professional Machine Learning & Data Engineer.
+I grew up in Jakarta, Indonesia. In 2020, I earned a double-degree: a B.Eng. in Mechatronics Engineering (summa cum laude) from Swiss German University and a B.Eng. from South Westphalia University of Applied Sciences. My thesis focused on physics machine learning: using deep learning to solve differential equations and model physical systems.
 
-In 2021, he was a participant of the Apple Developer Academy @ BINUS University, Indonesia, where he researched and developed a total of five apps for Apple operating systems, with a particular focus on cutting-edge technologies such as machine learning, image processing, and augmented reality. As an engineer, he collaborated together with diverse teams consisting of product managers, designers, and fellow engineers.
+I’m certified on AWS (Machine Learning, Data Analytics), Google Cloud (Professional Machine Learning Engineer, Professional Data Engineer), and Microsoft Azure (AI Engineer Associate, Data Scientist Associate).
 
-In 2019, he was an intern at the Institute of Power Systems and Power Economics, South Westphalia University of Applied Sciences, Soest, Germany, where his research encompassed the development and implementation of Python-based algorithms, as well as the Docker system integration of TensorFlow platforms and graph visualisation libraries.
+In 2021, I was a participant at the Apple Developer Academy @ BINUS University, where I built five apps across Apple platforms, focusing on machine learning, image processing, and augmented reality. Earlier, in 2019, I interned at the Institute of Power Systems and Power Economics in Soest, Germany, working on Python-based algorithms and Docker-based system integration for TensorFlow and graph visualization tooling.
 
-Mr Sim was consecutively awarded the Swiss German University Scholarships for the Best GPA in class from 2016 to 2020, for all semesters in which scholarships are applicable. He was also awarded the Outstanding Cambridge Learner Award in 2016 for the highest mark in the world for Cambridge IGCSE Mathematics (Without Coursework).
+Views are my own.
