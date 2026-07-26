@@ -48,6 +48,9 @@ This article follows a series of blog posts[^2][^3] on accelerating inference an
 
 All models and code are available at [fabio-sim/LightGlue-ONNX](https://github.com/fabio-sim/LightGlue-ONNX).
 
+**July 27, 2026 - Update**: Further exploration with GPT-5.6 Sol on `max` reasoning effort conceived [additional optimization strategies](#ranker-bypass--boundary-reranking), boosting the median speedup to **3x** the baseline.
+{: .notice--success}
+
 # Introduction
 
 ![RaCo-ALIKED-LightGlue+ Pipeline](/assets/images/posts/gpt-5-6-sol-tensorrt/raco-aliked-lightglue-pipeline.svg "RaCo-ALIKED-LightGlue+ Pipeline"){: .align-center}
@@ -65,7 +68,7 @@ Concretely in our batched implementation, given a tensor containing interleaved 
 - keypoints: $$(2B, N, 2)$$
 - scores: $$(2B, N)$$
 
-Internally, RaCo first proposes a larger candidate pool of keypoints (say, $$N_{cand}$$) for the ranker to select from. Based on the ranking, we then select the top $$N$$ keypoints, discarding the rest. We implement this using a simple heuristic $$N_{cand} = P \cdot N$$, where $$P$$ is a constant factor, and find that $$P=2$$ is an acceptable tradeoff between efficiency and quality. However, as we will see later on, this tradeoff was effectively eliminated by one of Sol's optimizations.
+Internally, RaCo first proposes a larger candidate pool of keypoints (say, $$N_{cand}$$) for the ranker to select from. Based on the ranking, we then select the top $$N$$ keypoints, discarding the rest. We implement this using a simple heuristic $$N_{cand} = P \cdot N$$, where $$P$$ is a constant factor, and find that $$P=2$$ is an acceptable tradeoff between efficiency and quality. However, as we will see later on, this tradeoff was effectively eliminated by [one of Sol's optimizations](#hierarchical-chunked-topk).
 {: .notice--warning}
 
 ALIKED independently computes dense multi-scale feature maps from the same images. Rather than using ALIKED's own detector, descriptors are sampled from these feature maps at the coordinates selected by RaCo:
@@ -206,6 +209,54 @@ $$
 ## Bounding the Ranker Selection
 
 RaCo’s learned ranker originally performed a full `argsort` over all detector candidates and then sliced the first $$K$$ entries. Sol replaced this with a simple `topk`, which avoids fully sorting candidates that will ultimately be discarded.
+
+## Ranker Bypass & Boundary Reranking
+
+After the preceding graph optimizations, the RaCo ranker remained one of the pipeline's largest bottlenecks. At $$1280^2$$, approximately 20 ms of the TensorRT profile was attributed to its convolutions. This cost is largely independent of the requested number of keypoints: the ranker consists of nine residual convolutional blocks followed by a final $$5\times5$$ convolution, all operating without any spatial downsampling.
+
+Consequently, the ranker must produce a score for every pixel in the image. At $$1280^2$$, this amounts to ~1.64 million ranking scores - even though only the scores at a few thousand detector-selected candidate positions are eventually sampled. The remainder of the dense rank map is immediately discarded.
+
+### Ranker Bypass at High Keypoint Counts
+
+The first obvious optimization is to bypass the ranker entirely and retain keypoints according to the detector scores. This is especially attractive when $$K$$ approaches the candidate-pool limit: at $$K=3584$$, for example, the ranker processes up to 3840 candidates merely to remove 256 of them.
+
+Initial evaluations suggested that bypassing was almost universally beneficial, often increasing both match count and epipolar precision. However, as the keypoint count decreases, the effect of the ranker's absence becomes much more pronounced through loss of rotational robustness. A broader sweep across all resolutions confirmed that bypassing at $$K=3072$$ and $$K=3584$$ provides a substantial pipeline speedup while introducing only a modest aggregate rotation-yield loss. It is therefore used for the highest keypoint budgets, where the ranker has relatively little influence over which candidates survive.
+
+### Computing Only the Ranking Scores We Need
+
+For lower keypoint budgets, complete bypassing sacrifices too much rotational robustness. However, densely evaluating the ranker remains wasteful because **the candidate coordinates are already known before ranking begins**. *So why don't we just compute the ranking scores at the coordinates we need?*
+
+In truth, it's much more complicated as convolutions involve neighbouring values, so there is a specific area (a patch) that must go into a given output. Sol first proposed evaluating the ranker independently around each candidate. Due to the ranker's receptive field, calculating one exact score requires a $$42\times42$$ image patch around that location. This candidate-local formulation worked extremely well at $$1280^2,\ K=512$$, reducing the isolated ranker cost by **half**.
+
+The approach does not scale indefinitely, however. As the number of candidates grows, nearby patches overlap heavily and repeatedly compute the same intermediate features. Patch extraction, boundary handling, and thousands of small convolutions eventually become more expensive than one dense full-image convolution. The break-even point therefore depends on both the candidate count and image area.
+
+### Reranking Only the Selection Boundary
+
+The key observation behind Sol's final solution is that the ranker is not equally useful for every candidate. Candidates with very high detector confidence are unlikely to fall outside the final selection, while candidates far below the cutoff are unlikely to enter it. The ranker is most valuable around the boundary separating selected and discarded candidates.
+
+Let $$R$$ denote the number of boundary positions to be decided by the ranker. Boundary reranking:
+
+1. Retains the first $$K-R$$ candidates according to detector confidence.
+2. Evaluates exact candidate-local ranker scores for the following $$2R$$ candidates.
+3. Selects the highest-ranked $$R$$ candidates from that boundary window.
+4. Combines them with the retained prefix to produce $$K$$ output keypoints.
+
+Equivalently,
+
+$$
+\text{output}
+=
+c_{0:K-R}
+\;\cup\;
+\operatorname{TopR}_{\text{ranker}}
+\left(c_{K-R:K+R}\right).
+$$
+
+From experimentation, we set $$R=256$$. Regardless of $$K$$, only 512 candidate patches therefore pass through the ranker.
+
+![Boundary reranking animation](/assets/images/posts/gpt-5-6-sol-tensorrt/boundary-reranking-animation.webp "Boundary reranking"){: .align-center}
+
+Surprisingly, boundary reranking did not merely approximate the dense ranker's quality. It consistently produced more geometrically correct matches and improved aggregate rotational robustness. This suggests that reproducing the dense ranker's selected set is not itself the ideal objective: preserving obviously strong detector candidates while applying the rotation-aware ranker only to ambiguous boundary points can produce a better set for the downstream matcher.
 
 ---
 
