@@ -48,7 +48,7 @@ This article follows a series of blog posts[^2][^3] on accelerating inference an
 
 All models and code are available at [fabio-sim/LightGlue-ONNX](https://github.com/fabio-sim/LightGlue-ONNX).
 
-**July 27, 2026 - Update**: Further exploration with GPT-5.6 Sol on `max` reasoning effort conceived [additional optimization strategies](#ranker-bypass--boundary-reranking), boosting the median speedup to **3x** the baseline.
+**July 27, 2026 - Update**: Further exploration with GPT-5.6 Sol on `max` reasoning effort conceived [additional optimization strategies](#ranker-bypass--boundary-reranking), boosting the median speedup to **3×** the baseline.
 {: .notice--success}
 
 # Introduction
